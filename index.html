@@ -1,1 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <title>TreeData - Collaborative Mind Map</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>[TreeData] Collaborative Idea Tree</h1>
+
+        <div class="global-controls">
+            <button class="btn-secondary" onclick="fetchTree()">🔄 Refresh Tree</button>
+            <button class="btn-secondary" onclick="toggleAll(true)">📂 Expand All</button>
+            <button class="btn-secondary" onclick="toggleAll(false)">📁 Collapse All</button>
+            <label style="margin-left: 20px; font-size: 14px; cursor: pointer; user-select: none;">
+                <input type="checkbox" id="imageToggle" checked onclick="updateImageVisibility()">
+                Show Images
+            </label>
+
+        </div>
+
+        <div id="tree-container">
+            <p>Loading tree...</p>
+        </div>
+
+        <hr>
+        <div class="tabs-container">
+            <div class="tabs-header">
+                <button class="tab-btn active" onclick="openTab(event, 'tab-add')">➕ Add New Node</button>
+                <button class="tab-btn" onclick="openTab(event, 'tab-upload')">📸 Update Photo</button>
+            </div>
+
+            <div id="tab-add" class="tab-content active">
+                <div class="add-node-form">
+                    <h3 class="form-header">Add New Node to:</h3>
+                    <div id="hierarchy-path">Select a node...</div>
+
+                    <div
+                        style="background: #fdfdfd; padding: 2px 2px 2px 10px;; border-radius: 8px; border: 1px dashed #007bff; margin-bottom: 5px;">
+                        <div
+                            style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 0px; align-items: flex-start;">
+                            <p
+                                style="font-size: 0.8rem; color: #007bff; font-weight: bold; margin: 0; text-transform: uppercase;">
+                                Preview
+                            </p>
+                            <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 12px;">
+
+                                <svg id="parent-arrow-svg" width="24" height="24" viewBox="0 0 128 128"
+                                    style="flex-shrink: 0; display: block; transform: translateY(12px);">
+                                    <g id="layer1">
+                                        <path fill="#0056b3"
+                                            d="M 115.36784,4.3050546 H 74.523946 c -20.736149,0 -37.702078,16.9659334 -37.702078,37.7020734 V 79.709194 H 12.632155 L 49.389225,123.69494 86.146292,79.709194 H 61.956581 V 42.007128 c 0,-6.912045 5.655308,-12.567357 12.567365,-12.567357 h 40.843894 z" />
+                                    </g>
+                                </svg>
+
+                                <span id="parent-display"
+                                    style="font-size: 0.8rem; background: #eef6ff; color: #0056b3; padding: 4px 10px; border-radius: 4px; border: 1px solid #d0e3ff; display: inline-flex; align-items: center;">
+                                    <span id="parent-name-preview" style="font-weight: 600; line-height: 1;">None
+                                        Selected</span>
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                        <input type="hidden" id="parentId">
+
+                        <div class="tree-row" id="preview-row" style="pointer-events: none;">
+                            <div class="toggle-btn">+</div>
+                            <div class="node-container" style="max-width: 400px; height: auto; min-width: 150px;">
+                                <div class="node-placeholder" id="preview-image-box">?</div>
+                                <img id="preview-image" class="node-image" src="" style="display:none;">
+                                <div class="node-content"
+                                    style="display: flex; flex-direction: column; white-space: normal; word-break: break-word;">
+                                    <div style="font-size: 14px; font-weight: bold;" id="preview-name">New Node</div>
+                                    <div style="font-size: 11px; color: #666;" id="preview-info">Info Preview</div>
+                                    <div style="font-size: 11px; color: #007bff; margin-top: 4px; font-style: italic;"
+                                        id="preview-description"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-group-vertical" style="display: flex; flex-direction: column; gap: 18px;">
+                        <input type="text" id="nodeContent" placeholder="Name"
+                            style="padding: 14px; border: 1px solid #ccc; border-radius: 8px;" oninput="updatePreview()"
+                            required>
+
+                        <input type="tel" id="nodePhone" placeholder="Additional Info (Optional)"
+                            style="padding: 14px; border: 1px solid #ccc; border-radius: 8px;"
+                            oninput="updatePreview()">
+
+                        <textarea id="nodeDescription" placeholder="Extra Details... (Optional)"
+                            style="padding: 14px; border: 1px solid #ccc; border-radius: 8px; min-height: 80px;"
+                            oninput="updatePreview()"></textarea>
+
+                        <div style="border-top: 1px solid #eee; padding-top: 15px; margin-top: 5px;">
+                            <label
+                                style="font-weight: bold; font-size: 0.85rem; color: #666; display: block; margin-bottom: 8px;">
+                                Add Photo? (Optional)
+                            </label>
+                            <input type="file" id="nodeImage" accept=".jpg, .jpeg, .png" style="font-size: 0.85rem;"
+                                onchange="previewFile()">
+                        </div>
+
+                        <div id="form-error"
+                            style="display: none; color: #dc3545; background: #fff5f5; border: 1px solid #ffcccc; padding: 10px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 10px; align-items: center; gap: 8px;">
+                            <span style="font-weight: bold;">⚠️</span>
+                            <span id="error-text">Please enter a Name.</span>
+                        </div>
+
+                        <button onclick="addNode()"
+                            style="padding: 16px; background-color: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                            Add to Tree
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-upload" class="tab-content">
+                <div class="upload-section">
+                    <div id="hierarchy-path-upd"
+                        style="font-size: 0.8rem; color: #666; margin-bottom: 10px; padding: 5px; background: #f9f9f9; border-radius: 4px;">
+                        Select a node to update...
+                    </div>
+
+                    <div class="tree-row" id="preview-row-upd" style="pointer-events: none; margin-bottom: 15px;">
+                        <div class="toggle-btn">+</div>
+                        <div class="node-container" style="max-width: 400px; height: auto; min-width: 150px;">
+                            <div class="node-placeholder" id="preview-image-box-upd">?</div>
+                            <img id="preview-image-upd" class="node-image" src="" style="display:none;">
+                            <div class="node-content"
+                                style="display: flex; flex-direction: column; white-space: normal; word-break: break-word;">
+                                <div style="font-size: 14px; font-weight: bold;" id="preview-name-upd">Select Node</div>
+                                <div style="font-size: 11px; color: #666;" id="preview-info-upd">Current Info</div>
+                                <div style="font-size: 11px; color: #007bff; margin-top: 4px; font-style: italic;"
+                                    id="preview-description-upd"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label style="font-size: 0.8rem; font-weight: bold;">Upload New Photo:</label>
+                        <input type="file" id="nodeImage-upd" accept=".jpg, .jpeg, .png" style="font-size: 0.85rem;"
+                            onchange="previewFileUpdate()">
+                        <button class="btn-primary" onclick="handleImageUpdate()"
+                            style="margin-top: 15px; width: 100%; background-color: #28a745; border:none;">
+                            📸 Update Photo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="custom-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <h2 style="color: #007bff; font-size: 1.8rem; margin-top: 0;">Confirm Entry</h2>
+
+            <div class="modal-body-scroll">
+                <div id="modal-path-preview" class="modal-path"></div>
+
+                <div class="modal-details" style="display:none;">
+                    <p id="modal-phone-preview"></p>
+                    <p id="modal-desc-preview"></p>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button id="confirm-yes" class="btn-lg btn-confirm">YES, SAVE</button>
+                <button id="confirm-no" class="btn-lg btn-cancel">CANCEL</button>
+            </div>
+        </div>
+    </div>
+    <div id="toast-container"
+        style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;">
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
